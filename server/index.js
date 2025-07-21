@@ -4,21 +4,21 @@ const { join } = require("node:path");
 const { Server } = require("socket.io");
 const sqlite3 = require("sqlite3");
 const { open } = require("sqlite");
-const { availableParallelism } = require("node:os");
-const cluster = require("node:cluster");
-const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
+// const { availableParallelism } = require("node:os");
+// const cluster = require("node:cluster");
+// const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
 
-if (cluster.isPrimary) {
-  const numCPUs = availableParallelism();
+// if (cluster.isPrimary) {
+//   const numCPUs = availableParallelism();
 
-  for (let i = 0; i < numCPUs; i++) {
-    cluster.fork({
-      PORT: 5000 + i,
-    });
-  }
+//   for (let i = 0; i < numCPUs; i++) {
+//     cluster.fork({
+//       PORT: 5000 + i,
+//     });
+//   }
 
-  return setupPrimary();
-}
+//   return setupPrimary();
+// }
 
 async function main() {
   const db = await open({
@@ -38,7 +38,7 @@ async function main() {
   const server = createServer(app);
   const io = new Server(server, {
     connectionStateRecovery: {},
-    adapter: createAdapter(),
+    // adapter: createAdapter(),
   });
 
   app.get("/", (req, res) => {
@@ -59,6 +59,12 @@ async function main() {
   // });
 
   io.on("connection", async (socket) => {
+
+    io.emit("connected");
+    socket.on('disconnect', () => {
+        io.emit("disconnected");
+    });
+
     socket.on("chat message", async (msg, clientOffset, callback) => {
       let result;
       try {
@@ -94,7 +100,8 @@ async function main() {
     }
   });
 
-  const port = process.env.PORT;
+//   const port = process.env.PORT;
+const port = 5000;
 
   server.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
