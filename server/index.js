@@ -32,6 +32,11 @@ async function main() {
           client_offset TEXT UNIQUE,
           content TEXT
       );
+
+      CREATE TABLE IF NOT EXISTS users (
+          id TEXT PRIMARY KEY,
+          nickname TEXT
+      );
     `);
 
   const app = express();
@@ -60,9 +65,13 @@ async function main() {
 
   io.on("connection", async (socket) => {
 
-    io.emit("connected");
+    socket.on('join', (nickname) => {
+
+      io.emit("user connected", nickname);
+    });
+
     socket.on('disconnect', () => {
-        io.emit("disconnected");
+      io.emit("disconnected");
     });
 
     socket.on("chat message", async (msg, clientOffset, callback) => {

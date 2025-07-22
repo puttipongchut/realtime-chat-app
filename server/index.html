@@ -19,7 +19,7 @@
 </head>
 <body>
     <input id="nickname" placeholder="Enter your nickname">
-    <button>Join</button>
+    <button id="join-btn">Join</button>
 
     <ul id="messages"></ul>
     <form id="form" action="">
@@ -39,12 +39,22 @@
 
             ackTimeout: 10000,
             retries: 3,
+            
         });
 
+        const joinBtn = document.getElementById('join-btn');
+        const nickname = document.getElementById('nickname');
         const form = document.getElementById('form');
         const input = document.getElementById('input');
         const messages = document.getElementById('messages');
         const toggleBtn = document.getElementById('toggle-btn');
+
+        joinBtn.addEventListener('click', () => {
+            if (nickname.value) {
+                socket.emit('join', nickname.value);
+                nickname.value = '';
+            }
+        });
 
         toggleBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -67,16 +77,16 @@
             }
         });
 
-        socket.on('connected', () => {
+        socket.on('user connected', (nickname) => {
             const item = document.createElement('li');
-            item.textContent = `User: joined`;
+            item.textContent = `User:${nickname} joined`;
             messages.appendChild(item);
             window.scrollTo(0, document.body.scrollHeight);
         });
 
-        socket.on('disconnected', () => {
+        socket.on('disconnected', (nickname) => {
             const item = document.createElement('li');
-            item.textContent = `User: left`;
+            item.textContent = `User:${nickname} left`;
             messages.appendChild(item);
             window.scrollTo(0, document.body.scrollHeight);
         });
