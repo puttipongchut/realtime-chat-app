@@ -1,4 +1,5 @@
 const express = require("express");
+const { v4: uuidv4 } = require("uuid");
 const { createServer } = require("node:http");
 const { join } = require("node:path");
 const { Server } = require("socket.io");
@@ -65,32 +66,51 @@ async function main() {
 
   io.on("connection", async (socket) => {
 
-    socket.on('join', (nickname) => {
-
+    socket.on('join', async (nickname) => {
+      socket.userId = uuidv4();
+      socket.nickname = nickname;
+      try {
+        await db.run(
+          "INSERT INTO users (id, nickname) VALUES (?, ?)", [socket.userId, nickname]
+        );
+      } catch (error) {
+        console.log(error);
+      }
       io.emit("user connected", nickname);
     });
 
-    socket.on('disconnect', () => {
-      io.emit("disconnected");
+    socket.on('disconnect', async () => {
+      const userId = socket.userId;
+      const name = socket.nickname || 'Unknown User';
+      try {
+        await db.run("DELETE FROM users WHERE id = ?", userId);
+      } catch (error) {
+        console.log(error);
+      }
+      io.emit("user disconnected", name);
     });
 
-    socket.on("chat message", async (msg, clientOffset, callback) => {
-      let result;
+    socket.on("chat message", async (msg, clientOffset, userId, callback) => {
+      let result, user;
       try {
         result = await db.run(
           "INSERT INTO messages (content, client_offset) VALUES (?, ?)",
           msg,
           clientOffset
         );
+        user = await db.get(
+          "SELECT FROM users WHERE nickname = ?", userId
+        );
+        console.log('extracted user');
       } catch (error) {
-        if (e.errno === 19) {
+        if (error.errno === 19) {
           callback();
         } else {
           // let the client retry
         }
         return;
       }
-      io.emit("chat message", msg, result.lastID);
+      io.emit("chat message", msg, result.lastID, user);
       callback();
     });
 
