@@ -15,11 +15,19 @@
       #messages { list-style-type: none; margin: 0; padding: 0; }
       #messages > li { padding: 0.5rem 1rem; }
       #messages > li:nth-child(odd) { background: #efefef; }
+
+      .container { display: flex; flex-direction: column; justify-content: center; align-items: center; margin-top: 2.5rem; }
+      #nickname { padding: 10px; border-radius: 10px 8px; }
+      #join-btn { margin-top: 1.5rem; width: 10%; padding: 5px; font-size: large; }
     </style>
 </head>
 <body>
-    <input id="nickname" placeholder="Enter your nickname">
-    <button id="join-btn">Join</button>
+    <form class="container">
+        <input id="nickname" placeholder="Enter your nickname">
+        <button id="join-btn">Join</button>
+        <h1>Name : </h1>
+    </form>
+    
 
     <ul id="messages"></ul>
     <form id="form" action="">
@@ -44,12 +52,14 @@
 
         const joinBtn = document.getElementById('join-btn');
         const nickname = document.getElementById('nickname');
+        const nameDisplay = document.querySelector('h1');
         const form = document.getElementById('form');
         const input = document.getElementById('input');
         const messages = document.getElementById('messages');
         const toggleBtn = document.getElementById('toggle-btn');
 
-        joinBtn.addEventListener('click', () => {
+        joinBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             if (nickname.value) {
                 socket.emit('join', nickname.value);
                 nickname.value = '';
@@ -71,8 +81,7 @@
             e.preventDefault();
             if (input.value) {
                 const clientOffset = `${socket.id}-${counter++}`;
-                const userId = socket.id;
-                socket.emit('chat message', input.value, clientOffset, userId);
+                socket.emit('chat message', input.value, clientOffset);
                 input.value = '';
             }
         });
@@ -81,6 +90,7 @@
             const item = document.createElement('li');
             item.textContent = `User:${nickname} joined`;
             messages.appendChild(item);
+            nameDisplay.textContent = `Name: ${nickname}`;
             window.scrollTo(0, document.body.scrollHeight);
         });
 

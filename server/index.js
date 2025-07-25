@@ -76,7 +76,7 @@ async function main() {
       } catch (error) {
         console.log(error);
       }
-      io.emit("user connected", nickname);
+      io.emit("user connected", socket.nickname);
     });
 
     socket.on('disconnect', async () => {
@@ -90,7 +90,7 @@ async function main() {
       io.emit("user disconnected", name);
     });
 
-    socket.on("chat message", async (msg, clientOffset, userId, callback) => {
+    socket.on("chat message", async (msg, clientOffset, callback) => {
       let result, user;
       try {
         result = await db.run(
@@ -99,19 +99,20 @@ async function main() {
           clientOffset
         );
         user = await db.get(
-          "SELECT FROM users WHERE nickname = ?", userId
-        );
+          "SELECT nickname, id FROM users WHERE id = ?", socket.userId
+        ) || { nickname: 'Unknown User', id: socket.userId };
+
         console.log('extracted user');
       } catch (error) {
         if (error.errno === 19) {
-          callback();
+          // callback();
         } else {
           // let the client retry
         }
         return;
       }
-      io.emit("chat message", msg, result.lastID, user);
-      callback();
+      io.emit("chat message", msg, result.lastID, user.nickname);
+      // callback();
     });
 
     if (!socket.recovered) {
