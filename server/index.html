@@ -44,7 +44,7 @@
             auth: {
                 serverOffset: 0
             },
-
+            
             // ackTimeout: 10000,
             // retries: 3,
             
@@ -88,15 +88,18 @@
 
         socket.on('user connected', (nickname) => {
             const item = document.createElement('li');
-            item.textContent = `User:${nickname} joined`;
+            item.textContent = `${nickname} joined`;
             messages.appendChild(item);
-            nameDisplay.textContent = `Name: ${nickname}`;
             window.scrollTo(0, document.body.scrollHeight);
+        });
+
+        socket.on('set nickname', (nickname) => {
+            nameDisplay.textContent = `Name: ${nickname}`;
         });
 
         socket.on('user disconnected', (nickname) => {
             const item = document.createElement('li');
-            item.textContent = `User:${nickname} left`;
+            item.textContent = `${nickname} left`;
             messages.appendChild(item);
             window.scrollTo(0, document.body.scrollHeight);
         });

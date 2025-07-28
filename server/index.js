@@ -77,6 +77,7 @@ async function main() {
         console.log(error);
       }
       io.emit("user connected", socket.nickname);
+      socket.emit("set nickname", socket.nickname);
     });
 
     socket.on('disconnect', async () => {
