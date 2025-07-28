@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat App</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
+  <body>
+    <form class="container">
+      <input id="nickname" placeholder="Enter your nickname" />
+      <button id="join-btn">Join</button>
+      <h1>Name :</h1>
+    </form>
+
+    <ul id="messages"></ul>
+    <form id="form" action="">
+      <input id="input" type="text" autocomplete="off" /><button>Send</button>
+      <button id="toggle-btn">Disconnect</button>
+    </form>
+
+    <!-- <script src="/socket.io/socket.io.js"></script> -->
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script>
+      let counter = 0;
+
+      const socket = io({
+        auth: {
+          serverOffset: 0,
+        },
+
+        // ackTimeout: 10000,
+        // retries: 3,
+      });
+
+      const joinBtn = document.getElementById("join-btn");
+      const nickname = document.getElementById("nickname");
+      const nameDisplay = document.querySelector("h1");
+      const form = document.getElementById("form");
+      const input = document.getElementById("input");
+      const messages = document.getElementById("messages");
+      const toggleBtn = document.getElementById("toggle-btn");
+
+      joinBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (nickname.value) {
+          socket.emit("join", nickname.value);
+          nickname.value = "";
+        }
+      });
+
+      toggleBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (socket.connected) {
+          toggleBtn.innerText = "Connect";
+          socket.disconnect();
+        } else {
+          toggleBtn.innerText = "Disconnect";
+          socket.connect();
+        }
+      });
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (input.value) {
+          const clientOffset = `${socket.id}-${counter++}`;
+          socket.emit("chat message", input.value, clientOffset);
+          input.value = "";
+        }
+      });
+
+      socket.on("user connected", (nickname) => {
+        const item = document.createElement("li");
+        item.textContent = `${nickname} joined`;
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+
+      socket.on("set nickname", (nickname) => {
+        nameDisplay.textContent = `Name: ${nickname}`;
+      });
+
+      socket.on("user disconnected", (nickname) => {
+        const item = document.createElement("li");
+        item.textContent = `${nickname} left`;
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+
+      socket.on("chat message", (msg, serverOffset, nickname) => {
+        const item = document.createElement("li");
+        item.textContent = `${nickname}: ${msg}`;
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+        socket.auth.serverOffset = serverOffset;
+      });
+    </script>
+  </body>
+</html>
